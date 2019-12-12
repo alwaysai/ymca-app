@@ -22,68 +22,89 @@ class YMCAPose(object):
 
 
 def arms_overhead(pose):
+    if not all([pose.nose_y, pose.r_elbow_y, pose.r_wrist_y, pose.l_elbow_y, pose.l_wrist_y]):
+        return False
     return all(y < pose.nose_y for y in (pose.r_elbow_y, pose.r_wrist_y, pose.l_elbow_y, pose.l_wrist_y))
 
 
+def arms_outward(pose):
+    if not all([pose.nose_x, pose.r_elbow_x, pose.r_wrist_x, pose.l_elbow_x, pose.l_wrist_x]):
+        return False
+    return all([x < pose.nose_x for x in (pose.r_elbow_x, pose.r_wrist_x)] +\
+               [x > pose.nose_x for x in (pose.l_elbow_x, pose.l_wrist_x)])
+
+
+def arms_straight(pose):
+    if not all([pose.r_wrist_y, pose.l_wrist_y, pose.r_wrist_x, pose.l_wrist_x, pose.r_elbow_y, pose.l_elbow_y, pose.r_elbow_x, pose.l_elbow_x]):
+        return False
+    return all([pose.r_wrist_y < pose.r_elbow_y,
+                pose.l_wrist_y < pose.l_elbow_y,
+                pose.r_wrist_x < pose.r_elbow_x,
+                pose.l_wrist_x > pose.l_elbow_x])
+
+
+def wrists_overhead(pose):
+    if not all([pose.nose_y, pose.r_wrist_y, pose.l_wrist_y]):
+        return False
+    return all(y < pose.nose_y for y in (pose.r_wrist_y, pose.l_wrist_y))
+
+
+def arms_bent_in(pose):
+    if not all([pose.r_wrist_y, pose.l_wrist_y, pose.r_wrist_x, pose.l_wrist_x, pose.r_elbow_y, pose.l_elbow_y, pose.r_elbow_x, pose.l_elbow_x]):
+        return False
+    return all([pose.r_wrist_y < pose.r_elbow_y,
+                pose.l_wrist_y < pose.l_elbow_y,
+                pose.r_wrist_x > pose.r_elbow_x,
+                pose.l_wrist_x < pose.l_elbow_x])
+
+
+def height_threshold(pose):
+    if not all([pose.nose_y, pose.neck_y]):
+        return False
+    return pose.neck_distance / 2.0
+
+
+def wrists_high(pose):
+    if not all([pose.r_wrist_y, pose.l_wrist_y, pose.nose_y]):
+        return False
+    return all([pose.r_wrist_y < (pose.nose_y - height_threshold(pose)),
+                pose.l_wrist_y < (pose.nose_y - height_threshold(pose))])
+
+
+def wrists_low(pose):
+    if not all([pose.r_wrist_y, pose.l_wrist_y, pose.nose_y]):
+        return False
+    return all([pose.r_wrist_y > (pose.nose_y - height_threshold(pose)), pose.l_wrist_y > (pose.nose_y - height_threshold(pose))])
+
+
+def wrists_left(pose):
+    if not all([pose.r_wrist_x, pose.nose_x, pose.l_wrist_x]):
+        return False
+    return all([pose.r_wrist_x > pose.nose_x, pose.l_wrist_x > pose.nose_x])
+
+def right_wrist_overhead(pose):
+    if not all([pose.r_wrist_y, pose.nose_y]):
+        return False
+    return pose.r_wrist_y < pose.nose_y
+
 def is_y(pose):
     """Determines if the pose is a Y pose"""
-    have_needs_points = all(p != -1 for p in (pose.r_elbow_y, pose.r_wrist_y, pose.l_elbow_y, pose.l_wrist_y,
-                                              pose.r_elbow_x, pose.r_wrist_x, pose.l_elbow_x, pose.l_wrist_x,
-                                              pose.nose_x, pose.nose_y))
-    if not have_needs_points:
-        return False
-    arms_overhead = all(y < pose.nose_y for y in (pose.r_elbow_y, pose.r_wrist_y, pose.l_elbow_y, pose.l_wrist_y))
-    arms_outward = all([x < pose.nose_x for x in (pose.r_elbow_x, pose.r_wrist_x)] + [x > pose.nose_x for x in (pose.l_elbow_x, pose.l_wrist_x)])
-    arms_straight = all([pose.r_wrist_y < pose.r_elbow_y,
-                         pose.l_wrist_y < pose.l_elbow_y,
-                         pose.r_wrist_x < pose.r_elbow_x,
-                         pose.l_wrist_x > pose.l_elbow_x])
-    return all([arms_overhead, arms_outward, arms_straight])
+    return all([arms_overhead(pose), arms_outward(pose), arms_straight(pose)])
+
 
 def is_a(pose):
     """Determines if the pose is an A."""
-    have_needs_points = all(p != -1 for p in (pose.r_elbow_y, pose.r_wrist_y, pose.l_elbow_y, pose.l_wrist_y,
-                                              pose.r_elbow_x, pose.r_wrist_x, pose.l_elbow_x, pose.l_wrist_x,
-                                              pose.nose_x, pose.nose_y, pose.neck_y))
-    if not have_needs_points:
-        return False
-    arms_overhead = all(y < pose.nose_y for y in (pose.r_elbow_y, pose.r_wrist_y, pose.l_elbow_y, pose.l_wrist_y))
-    arms_outward = all([x < pose.nose_x for x in (pose.r_elbow_x, pose.r_wrist_x)] + [x > pose.nose_x for x in (pose.l_elbow_x, pose.l_wrist_x)])
-    arms_bent_in = all([pose.r_wrist_y < pose.r_elbow_y,
-                        pose.l_wrist_y < pose.l_elbow_y,
-                        pose.r_wrist_x > pose.r_elbow_x,
-                        pose.l_wrist_x < pose.l_elbow_x])
-    height_threshold = pose.neck_distance / 2.0
-    wrists_high = all([pose.r_wrist_y < (pose.nose_y - height_threshold), pose.l_wrist_y < (pose.nose_y - height_threshold)])
-    return all([arms_overhead, arms_outward, arms_bent_in, wrists_high])
+    return all([arms_overhead(pose), arms_outward(pose), arms_bent_in(pose), wrists_high(pose)])
 
 
 def is_m(pose):
     """Determines if the pose is an A."""
-    have_needs_points = all(p != -1 for p in (pose.r_elbow_y, pose.r_wrist_y, pose.l_elbow_y, pose.l_wrist_y,
-                                              pose.r_elbow_x, pose.r_wrist_x, pose.l_elbow_x, pose.l_wrist_x,
-                                              pose.nose_x, pose.nose_y, pose.neck_y))
-    if not have_needs_points:
-        return False
-    wrists_overhead = all(y < pose.nose_y for y in (pose.r_wrist_y, pose.l_wrist_y))
-    arms_outward = all([x < pose.nose_x for x in (pose.r_elbow_x, pose.r_wrist_x)] + [x > pose.nose_x for x in (pose.l_elbow_x, pose.l_wrist_x)])
-    arms_bent_in = all([pose.r_wrist_y < pose.r_elbow_y,
-                        pose.l_wrist_y < pose.l_elbow_y,
-                        pose.r_wrist_x > pose.r_elbow_x,
-                        pose.l_wrist_x < pose.l_elbow_x])
-    height_threshold = pose.neck_distance / 2.0
-    wrists_low = all([pose.r_wrist_y > (pose.nose_y - height_threshold), pose.l_wrist_y > (pose.nose_y - height_threshold)])
-    return all([wrists_overhead, arms_outward, arms_bent_in, wrists_low])
+    return all([wrists_overhead(pose), arms_outward(pose), arms_bent_in(pose), wrists_low(pose)])
 
 
 def is_c(pose):
     """Determines if the pose is a C"""
-    have_needs_points = all(p != -1 for p in (pose.r_wrist_y, pose.r_wrist_x, pose.l_wrist_x, pose.nose_x, pose.nose_y))
-    if not have_needs_points:
-        return False
-    wrists_left = all([pose.r_wrist_x > pose.nose_x, pose.l_wrist_x > pose.nose_x])
-    right_wrist_overhead = pose.r_wrist_y < pose.nose_y
-    return all([wrists_left, right_wrist_overhead])
+    return all([wrists_left(pose), right_wrist_overhead(pose)])
 
 
 def main():
@@ -116,13 +137,7 @@ def main():
                 text = [""]
                 for ind, pose in enumerate(results.poses):
                     app_pose = YMCAPose(pose)
-                    nose_y = pose.key_points[0][1]
-                    neck_y = pose.key_points[1][0]
 
-                    if nose_y != -1 and neck_y != -1:
-                        neck_distance = neck_y - nose_y
-                    else:
-                        neck_distance = 0
                     if is_a(app_pose):
                         print("----------A!-------------")
                         overlay = edgeiq.resize(a_letter, frame.shape[1], frame.shape[0], False)

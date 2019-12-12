@@ -5,6 +5,87 @@ import edgeiq
 import cv2
 
 
+class YMCAPose(object):
+    def __init__(self, pose):
+        self.r_wrist_y = pose.key_points[4][1]
+        self.r_wrist_x = pose.key_points[4][0]
+        self.r_elbow_y = pose.key_points[3][1]
+        self.r_elbow_x = pose.key_points[3][0]
+        self.l_wrist_y = pose.key_points[7][1]
+        self.l_wrist_x = pose.key_points[7][0]
+        self.l_elbow_y = pose.key_points[6][1]
+        self.l_elbow_x = pose.key_points[6][0]
+        self.nose_y = pose.key_points[0][1]
+        self.nose_x = pose.key_points[0][0]
+        self.neck_y = pose.key_points[1][0]
+        self.neck_distance = abs(self.neck_y - self.nose_y)
+
+
+def arms_overhead(pose):
+    return all(y < pose.nose_y for y in (pose.r_elbow_y, pose.r_wrist_y, pose.l_elbow_y, pose.l_wrist_y))
+
+
+def is_y(pose):
+    """Determines if the pose is a Y pose"""
+    have_needs_points = all(p != -1 for p in (pose.r_elbow_y, pose.r_wrist_y, pose.l_elbow_y, pose.l_wrist_y,
+                                              pose.r_elbow_x, pose.r_wrist_x, pose.l_elbow_x, pose.l_wrist_x,
+                                              pose.nose_x, pose.nose_y))
+    if not have_needs_points:
+        return False
+    arms_overhead = all(y < pose.nose_y for y in (pose.r_elbow_y, pose.r_wrist_y, pose.l_elbow_y, pose.l_wrist_y))
+    arms_outward = all([x < pose.nose_x for x in (pose.r_elbow_x, pose.r_wrist_x)] + [x > pose.nose_x for x in (pose.l_elbow_x, pose.l_wrist_x)])
+    arms_straight = all([pose.r_wrist_y < pose.r_elbow_y,
+                         pose.l_wrist_y < pose.l_elbow_y,
+                         pose.r_wrist_x < pose.r_elbow_x,
+                         pose.l_wrist_x > pose.l_elbow_x])
+    return all([arms_overhead, arms_outward, arms_straight])
+
+def is_a(pose):
+    """Determines if the pose is an A."""
+    have_needs_points = all(p != -1 for p in (pose.r_elbow_y, pose.r_wrist_y, pose.l_elbow_y, pose.l_wrist_y,
+                                              pose.r_elbow_x, pose.r_wrist_x, pose.l_elbow_x, pose.l_wrist_x,
+                                              pose.nose_x, pose.nose_y, pose.neck_y))
+    if not have_needs_points:
+        return False
+    arms_overhead = all(y < pose.nose_y for y in (pose.r_elbow_y, pose.r_wrist_y, pose.l_elbow_y, pose.l_wrist_y))
+    arms_outward = all([x < pose.nose_x for x in (pose.r_elbow_x, pose.r_wrist_x)] + [x > pose.nose_x for x in (pose.l_elbow_x, pose.l_wrist_x)])
+    arms_bent_in = all([pose.r_wrist_y < pose.r_elbow_y,
+                        pose.l_wrist_y < pose.l_elbow_y,
+                        pose.r_wrist_x > pose.r_elbow_x,
+                        pose.l_wrist_x < pose.l_elbow_x])
+    height_threshold = pose.neck_distance / 2.0
+    wrists_high = all([pose.r_wrist_y < (pose.nose_y - height_threshold), pose.l_wrist_y < (pose.nose_y - height_threshold)])
+    return all([arms_overhead, arms_outward, arms_bent_in, wrists_high])
+
+
+def is_m(pose):
+    """Determines if the pose is an A."""
+    have_needs_points = all(p != -1 for p in (pose.r_elbow_y, pose.r_wrist_y, pose.l_elbow_y, pose.l_wrist_y,
+                                              pose.r_elbow_x, pose.r_wrist_x, pose.l_elbow_x, pose.l_wrist_x,
+                                              pose.nose_x, pose.nose_y, pose.neck_y))
+    if not have_needs_points:
+        return False
+    wrists_overhead = all(y < pose.nose_y for y in (pose.r_wrist_y, pose.l_wrist_y))
+    arms_outward = all([x < pose.nose_x for x in (pose.r_elbow_x, pose.r_wrist_x)] + [x > pose.nose_x for x in (pose.l_elbow_x, pose.l_wrist_x)])
+    arms_bent_in = all([pose.r_wrist_y < pose.r_elbow_y,
+                        pose.l_wrist_y < pose.l_elbow_y,
+                        pose.r_wrist_x > pose.r_elbow_x,
+                        pose.l_wrist_x < pose.l_elbow_x])
+    height_threshold = pose.neck_distance / 2.0
+    wrists_low = all([pose.r_wrist_y > (pose.nose_y - height_threshold), pose.l_wrist_y > (pose.nose_y - height_threshold)])
+    return all([wrists_overhead, arms_outward, arms_bent_in, wrists_low])
+
+
+def is_c(pose):
+    """Determines if the pose is a C"""
+    have_needs_points = all(p != -1 for p in (pose.r_wrist_y, pose.r_wrist_x, pose.l_wrist_x, pose.nose_x, pose.nose_y))
+    if not have_needs_points:
+        return False
+    wrists_left = all([pose.r_wrist_x > pose.nose_x, pose.l_wrist_x > pose.nose_x])
+    right_wrist_overhead = pose.r_wrist_y < pose.nose_y
+    return all([wrists_left, right_wrist_overhead])
+
+
 def main():
     pose_estimator = edgeiq.PoseEstimation("alwaysai/human-pose")
     pose_estimator.load(engine=edgeiq.Engine.DNN_OPENVINO, accelerator=edgeiq.Accelerator.MYRIAD)
@@ -34,45 +115,34 @@ def main():
                 # Generate text to display on streamer
                 text = [""]
                 for ind, pose in enumerate(results.poses):
-                    right_wrist_y = pose.key_points[4][1]
-                    right_wrist_x = pose.key_points[4][0]
-                    right_elbow_y = pose.key_points[3][1]
-                    right_elbow_x = pose.key_points[3][0]
-                    left_wrist_y = pose.key_points[7][1]
-                    left_wrist_x = pose.key_points[7][0]
-                    left_elbow_y = pose.key_points[6][1]
-                    left_elbow_x = pose.key_points[6][0]
+                    app_pose = YMCAPose(pose)
                     nose_y = pose.key_points[0][1]
-                    nose_x = pose.key_points[0][0]
                     neck_y = pose.key_points[1][0]
+
                     if nose_y != -1 and neck_y != -1:
                         neck_distance = neck_y - nose_y
                     else:
                         neck_distance = 0
-                    if right_wrist_y != -1 and left_wrist_y != -1 and nose_y != -1 and left_elbow_y != -1 and right_elbow_y != -1 and neck_distance > 0:
-                        if right_wrist_y < nose_y and left_wrist_y < nose_y and right_wrist_x > right_elbow_x and left_wrist_x < left_elbow_x:
-                            if right_wrist_y < (nose_y - neck_distance / 3.0) and left_wrist_y < (nose_y - neck_distance / 3.0):
-                                print("----------A!-------------")
-                                overlay = edgeiq.resize(a_letter, frame.shape[1], frame.shape[0], False)
-                                cv2.addWeighted(frame, 0.4, overlay, 0.6, 0, frame)
-                                continue
-                            elif (nose_y - neck_distance) < right_wrist_y and (nose_y - neck_distance) < left_wrist_y:
-                                print("----------M!-------------")
-                                overlay = edgeiq.resize(m_letter, frame.shape[1], frame.shape[0], False)
-                                cv2.addWeighted(frame, 0.4, overlay, 0.6, 0, frame)
-                                continue
-                    if right_wrist_y != -1 and left_wrist_y != -1 and nose_y != -1 and right_elbow_x and left_elbow_x and right_wrist_x and left_wrist_x:
-                        if right_wrist_y < nose_y and left_wrist_y < nose_y and right_wrist_x < right_elbow_x and left_wrist_x > left_elbow_x:
-                            print("----------Y!-------------")
-                            overlay = edgeiq.resize(y_letter, frame.shape[1], frame.shape[0], False)
-                            cv2.addWeighted(frame, 0.4, overlay, 0.6, 0, frame)
-                            continue
-                    if left_wrist_x != -1 and nose_x != -1 and left_wrist_y != -1 and nose_y != -1 and right_wrist_y != -1 and nose_x != -1:
-                        if right_wrist_x > nose_x and right_wrist_y < nose_y and left_wrist_x > nose_x:
-                            print("----------C!-------------")
-                            overlay = edgeiq.resize(c_letter, frame.shape[1], frame.shape[0], False)
-                            cv2.addWeighted(frame, 0.4, overlay, 0.6, 0, frame)
-                            continue
+                    if is_a(app_pose):
+                        print("----------A!-------------")
+                        overlay = edgeiq.resize(a_letter, frame.shape[1], frame.shape[0], False)
+                        cv2.addWeighted(frame, 0.4, overlay, 0.6, 0, frame)
+                        continue
+                    if is_m(app_pose):
+                        print("----------M!-------------")
+                        overlay = edgeiq.resize(m_letter, frame.shape[1], frame.shape[0], False)
+                        cv2.addWeighted(frame, 0.4, overlay, 0.6, 0, frame)
+                        continue
+                    if is_y(app_pose):
+                        print("----------Y!-------------")
+                        overlay = edgeiq.resize(y_letter, frame.shape[1], frame.shape[0], False)
+                        cv2.addWeighted(frame, 0.4, overlay, 0.6, 0, frame)
+                        continue
+                    if is_c(app_pose):
+                        print("----------C!-------------")
+                        overlay = edgeiq.resize(c_letter, frame.shape[1], frame.shape[0], False)
+                        cv2.addWeighted(frame, 0.4, overlay, 0.6, 0, frame)
+                        continue
 
                 streamer.send_data(results.draw_poses(frame), text)
 

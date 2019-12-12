@@ -111,13 +111,7 @@ def main():
     pose_estimator = edgeiq.PoseEstimation("alwaysai/human-pose")
     pose_estimator.load(engine=edgeiq.Engine.DNN_OPENVINO, accelerator=edgeiq.Accelerator.MYRIAD)
 
-    print("Loaded model:\n{}\n".format(pose_estimator.model_id))
-    print("Engine: {}".format(pose_estimator.engine))
-    print("Accelerator: {}\n".format(pose_estimator.accelerator))
-
-    fps = edgeiq.FPS()
-
-    y_letter = cv2.imread('letter_y.png')
+    y_letter = cv2.imread('y_letter.png')
     m_letter = cv2.imread('m_letter.jpg')
     c_letter = cv2.imread('c_letter.jpeg')
     a_letter = cv2.imread('a_letter.jpg')
@@ -127,7 +121,6 @@ def main():
                 edgeiq.Streamer() as streamer:
             # Allow Webcam to warm up
             time.sleep(2.0)
-            fps.start()
 
             # loop detection
             while True:
@@ -139,60 +132,29 @@ def main():
                     app_pose = YMCAPose(pose)
 
                     if is_a(app_pose):
-                        print("----------A!-------------")
                         overlay = edgeiq.resize(a_letter, frame.shape[1], frame.shape[0], False)
                         cv2.addWeighted(frame, 0.4, overlay, 0.6, 0, frame)
                         continue
                     if is_m(app_pose):
-                        print("----------M!-------------")
                         overlay = edgeiq.resize(m_letter, frame.shape[1], frame.shape[0], False)
                         cv2.addWeighted(frame, 0.4, overlay, 0.6, 0, frame)
                         continue
                     if is_y(app_pose):
-                        print("----------Y!-------------")
                         overlay = edgeiq.resize(y_letter, frame.shape[1], frame.shape[0], False)
                         cv2.addWeighted(frame, 0.4, overlay, 0.6, 0, frame)
                         continue
                     if is_c(app_pose):
-                        print("----------C!-------------")
                         overlay = edgeiq.resize(c_letter, frame.shape[1], frame.shape[0], False)
                         cv2.addWeighted(frame, 0.4, overlay, 0.6, 0, frame)
                         continue
 
                 streamer.send_data(results.draw_poses(frame), text)
 
-                fps.update()
 
                 if streamer.check_exit():
                     break
     finally:
-        fps.stop()
-        print("elapsed time: {:.2f}".format(fps.get_elapsed_seconds()))
-        print("approx. FPS: {:.2f}".format(fps.compute_fps()))
-
         print("Program Ending")
-
-
-    # fps = edgeiq.FPS()
-
-    # with edgeiq.Streamer() as streamer:
-        # Allow Webcam to warm up
-    # time.sleep(2.0)
-    # fps.start()
-
-    # y_letter = cv2.imread('letter_y.png')
-    # image = cv2.imread('y_person.jpg')
-    # results = pose_estimator.estimate(image)
-    # pose = results.poses[0]
-    # right_wrist_y = pose.key_points[4][1]
-    # left_wrist_y = pose.key_points[7][1]
-    # nose_y = pose.key_points[0][1]
-    # if right_wrist_y < nose_y and left_wrist_y < nose_y:
-    #     print("----------Y!-------------")
-    #     overlay = edgeiq.resize(y_letter, image.shape[1], image.shape[0], False)
-    #     cv2.addWeighted(image, 0.4, overlay, 0.6, 0, image)
-    # cv2.imwrite("woot.png", image)
-    # print("{} {} {}".format(left_wrist_y, right_wrist_y, nose_y))
 
 
 if __name__ == "__main__":

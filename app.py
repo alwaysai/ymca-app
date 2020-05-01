@@ -7,17 +7,18 @@ import cv2
 
 class YMCAPose(object):
     def __init__(self, pose):
-        self.r_wrist_y = pose.key_points[4][1]
-        self.r_wrist_x = pose.key_points[4][0]
-        self.r_elbow_y = pose.key_points[3][1]
-        self.r_elbow_x = pose.key_points[3][0]
-        self.l_wrist_y = pose.key_points[7][1]
-        self.l_wrist_x = pose.key_points[7][0]
-        self.l_elbow_y = pose.key_points[6][1]
-        self.l_elbow_x = pose.key_points[6][0]
-        self.nose_y = pose.key_points[0][1]
-        self.nose_x = pose.key_points[0][0]
-        self.neck_y = pose.key_points[1][0]
+        print('init: pose: keypoints: {}'.format(pose.key_points))
+        self.r_wrist_y = pose.key_points['Right Wrist'].y
+        self.r_wrist_x = pose.key_points['Right Wrist'].x
+        self.r_elbow_y = pose.key_points['Right Elbow'].y
+        self.r_elbow_x = pose.key_points['Right Elbow'].x
+        self.l_wrist_y = pose.key_points['Left Wrist'].y
+        self.l_wrist_x = pose.key_points['Left Wrist'].x
+        self.l_elbow_y = pose.key_points['Left Elbow'].y
+        self.l_elbow_x = pose.key_points['Left Elbow'].x
+        self.nose_y = pose.key_points['Nose'].y
+        self.nose_x = pose.key_points['Nose'].x
+        self.neck_y = pose.key_points['Neck'].y
         self.neck_distance = abs(self.neck_y - self.nose_y)
 
 
@@ -117,7 +118,7 @@ def main():
     a_letter = cv2.imread('a_letter.jpg')
 
     try:
-        with edgeiq.WebcamVideoStream(cam=0) as video_stream, \
+        with edgeiq.WebcamVideoStream(cam=1) as video_stream, \
                 edgeiq.Streamer() as streamer:
             # Allow Webcam to warm up
             time.sleep(2.0)

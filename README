@@ -1,27 +1,25 @@
-## Determining Human Activity using AlwaysAI
-* This model can only run on linux machines using the Intel NCS
- - Detection allows us to collect valuabel info and create interactive experiences
- - Poses Estimation. Map body parts to key points on an image. Then use those key points to determine activity. 
- - Classification after
-### YMCA
-  - In this example we'll be using a simple set of cases to determine if someone is doing a Y, M, C, or A in our image
-  then displaying the letter on the screen if they do creating a fun virtual experience.
-  - We have a pi setup for this purpose.
-  - We have the aai cli installed and start with Looking at the output of human pose
-    - Describe output with images
-  - So we can see the human pose output is this. So how do we take that data and know whether or not the person
-    is in a ymca.
-      - We can run it through another classification model
-      - We can retrain a model for this classification
-      - Or we can write a simple logical classifier.
-        - What do the poses look like.
-      - Code snippets
-  - Realtime now instead of example images.
+# YMCA APP
+* The human-pose model used in this app can only run on linux machines using the [Intel NCS](https://software.intel.com/en-us/neural-compute-stick)
 
-### Conslusion
-  - As you can see with a little setup and some coding you can create really cool applications. (look our for a dancing
-   one I'm working on in the future)
+In this example we'll be using a simple set of cases to determine if someone is doing a Y, M, C, or A in our image
+then displaying the letter on the screen if they do creating a fun virtual experience.
 
-### About AlwaysAI
-  - AlwaysAI is a platform aimed at democratizing AI on the edge by making it easier. We provide clis, apis, a model 
-  catalog and docker containers to help you get started building a CV app in minutes.
+## Requirements
+- An [alwaysAI account](https://www.alwaysai.co/auth?register=true)
+- [alwaysAI installed](https://dashboard.alwaysai.co/docs/getting_started/development_computer_setup.html) on a development machine
+- [Docker installed](https://dashboard.alwaysai.co/docs/getting_started/edge_device_setup.html on the target deployment device (if different than the development machin)
+
+## Running
+First configure where the app will be deployed (locally or to a remote device) with: `aai app configure`
+
+Then deploy the code with `aai app deploy`
+
+And finally to start: `aai app start`
+
+Open `localhost:5000` on any browswer to view the output streamer.
+
+To end the app just click on the red stop button in the streamer or CTRL+C from the command line.
+
+## About AlwaysAI
+AlwaysAI is a platform aimed at democratizing AI on the edge by making it easier. We provide clis, apis, a model 
+catalog and docker containers to help you get started building a CV app in minutes. Visit our website at [alwaysi.co](https://www.alwaysai.co) for more info.

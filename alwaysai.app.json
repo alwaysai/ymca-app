@@ -3,6 +3,6 @@
     "start": "python app.py"
   },
   "models": {
-    "alwaysai/human-pose": 4
+    "alwaysai/human-pose": 6
   }
 }

@@ -1,6 +1,5 @@
 # YMCA APP
-*** The human-pose model used in this app can only run on linux machines using the [Intel NCS](https://software.intel.com/en-us/neural-compute-stick)***
-
+*** This app expects edgeiq 0.14.0 (available by dockerfile or in the 0.3.0 installers)
 In this example we'll be using a simple set of cases to determine if someone is doing a Y, M, C, or A in our image
 then displaying the letter on the screen if they do creating a fun virtual experience.
 

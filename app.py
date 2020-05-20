@@ -5,88 +5,53 @@ import edgeiq
 import cv2
 
 
-class YMCAPose(object):
-    def __init__(self, pose):
-        print('init: pose: keypoints: {}'.format(pose.key_points))
-        self.r_wrist_y = pose.key_points['Right Wrist'].y
-        self.r_wrist_x = pose.key_points['Right Wrist'].x
-        self.r_elbow_y = pose.key_points['Right Elbow'].y
-        self.r_elbow_x = pose.key_points['Right Elbow'].x
-        self.l_wrist_y = pose.key_points['Left Wrist'].y
-        self.l_wrist_x = pose.key_points['Left Wrist'].x
-        self.l_elbow_y = pose.key_points['Left Elbow'].y
-        self.l_elbow_x = pose.key_points['Left Elbow'].x
-        self.nose_y = pose.key_points['Nose'].y
-        self.nose_x = pose.key_points['Nose'].x
-        self.neck_y = pose.key_points['Neck'].y
-        self.neck_distance = abs(self.neck_y - self.nose_y)
-
-
 def arms_overhead(pose):
-    if not all([pose.nose_y, pose.r_elbow_y, pose.r_wrist_y, pose.l_elbow_y, pose.l_wrist_y]):
-        return False
-    return all(y < pose.nose_y for y in (pose.r_elbow_y, pose.r_wrist_y, pose.l_elbow_y, pose.l_wrist_y))
+    return all(y < pose.key_points['Nose'].y for y in (pose.key_points['Right Elbow'].y, pose.key_points['Right Wrist'].y, pose.key_points['Left Elbow'].y, pose.key_points['Left Wrist'].y))
 
 
 def arms_outward(pose):
-    if not all([pose.nose_x, pose.r_elbow_x, pose.r_wrist_x, pose.l_elbow_x, pose.l_wrist_x]):
-        return False
-    return all([x < pose.nose_x for x in (pose.r_elbow_x, pose.r_wrist_x)] +\
-               [x > pose.nose_x for x in (pose.l_elbow_x, pose.l_wrist_x)])
+    return all([x < pose.key_points['Nose'].x for x in (pose.key_points['Right Elbow'].x, pose.key_points['Right Wrist'].x)] +\
+               [x > pose.key_points['Nose'].x for x in (pose.key_points['Left Elbow'].x, pose.key_points['Left Wrist'].x)])
 
 
 def arms_straight(pose):
-    if not all([pose.r_wrist_y, pose.l_wrist_y, pose.r_wrist_x, pose.l_wrist_x, pose.r_elbow_y, pose.l_elbow_y, pose.r_elbow_x, pose.l_elbow_x]):
-        return False
-    return all([pose.r_wrist_y < pose.r_elbow_y,
-                pose.l_wrist_y < pose.l_elbow_y,
-                pose.r_wrist_x < pose.r_elbow_x,
-                pose.l_wrist_x > pose.l_elbow_x])
+    return all([pose.key_points['Right Wrist'].y < pose.key_points['Right Elbow'].y,
+                pose.key_points['Left Wrist'].y < pose.key_points['Left Elbow'].y,
+                pose.key_points['Right Wrist'].x < pose.key_points['Right Elbow'].x,
+                pose.key_points['Left Wrist'].x > pose.key_points['Left Elbow'].x])
 
 
 def wrists_overhead(pose):
-    if not all([pose.nose_y, pose.r_wrist_y, pose.l_wrist_y]):
-        return False
-    return all(y < pose.nose_y for y in (pose.r_wrist_y, pose.l_wrist_y))
+    return all(y < pose.key_points['Nose'].y for y in (pose.key_points['Right Wrist'].y, pose.key_points['Left Wrist'].y))
 
 
 def arms_bent_in(pose):
-    if not all([pose.r_wrist_y, pose.l_wrist_y, pose.r_wrist_x, pose.l_wrist_x, pose.r_elbow_y, pose.l_elbow_y, pose.r_elbow_x, pose.l_elbow_x]):
-        return False
-    return all([pose.r_wrist_y < pose.r_elbow_y,
-                pose.l_wrist_y < pose.l_elbow_y,
-                pose.r_wrist_x > pose.r_elbow_x,
-                pose.l_wrist_x < pose.l_elbow_x])
+    return all([pose.key_points['Right Wrist'].y < pose.key_points['Right Elbow'].y,
+                pose.key_points['Left Wrist'].y < pose.key_points['Left Elbow'].y,
+                pose.key_points['Right Wrist'].x > pose.key_points['Right Elbow'].x,
+                pose.key_points['Left Wrist'].x < pose.key_points['Left Elbow'].x])
 
 
 def height_threshold(pose):
-    if not all([pose.nose_y, pose.neck_y]):
-        return False
-    return pose.neck_distance / 2.0
+    return pose.key_points['Neck'].y - pose.key_points['Nose'].y
 
 
 def wrists_high(pose):
-    if not all([pose.r_wrist_y, pose.l_wrist_y, pose.nose_y]):
-        return False
-    return all([pose.r_wrist_y < (pose.nose_y - height_threshold(pose)),
-                pose.l_wrist_y < (pose.nose_y - height_threshold(pose))])
+    return all([pose.key_points['Right Wrist'].y < (pose.key_points['Nose'].y - height_threshold(pose)),
+                pose.key_points['Left Wrist'].y < (pose.key_points['Nose'].y - height_threshold(pose))])
 
 
 def wrists_low(pose):
-    if not all([pose.r_wrist_y, pose.l_wrist_y, pose.nose_y]):
-        return False
-    return all([pose.r_wrist_y > (pose.nose_y - height_threshold(pose)), pose.l_wrist_y > (pose.nose_y - height_threshold(pose))])
+    return all([pose.key_points['Right Wrist'].y > (pose.key_points['Nose'].y - height_threshold(pose)), pose.key_points['Left Wrist'].y > (pose.key_points['Nose'].y - height_threshold(pose))])
 
 
 def wrists_left(pose):
-    if not all([pose.r_wrist_x, pose.nose_x, pose.l_wrist_x]):
-        return False
-    return all([pose.r_wrist_x > pose.nose_x, pose.l_wrist_x > pose.nose_x])
+    return all([pose.key_points['Right Wrist'].x > pose.key_points['Nose'].x, pose.key_points['Left Wrist'].x > pose.key_points['Nose'].x])
+
 
 def right_wrist_overhead(pose):
-    if not all([pose.r_wrist_y, pose.nose_y]):
-        return False
-    return pose.r_wrist_y < pose.nose_y
+    return pose.key_points['Right Wrist'].y < pose.key_points['Nose'].y
+
 
 def is_y(pose):
     """Determines if the pose is a Y pose"""
@@ -110,7 +75,7 @@ def is_c(pose):
 
 def main():
     pose_estimator = edgeiq.PoseEstimation("alwaysai/human-pose")
-    pose_estimator.load(engine=edgeiq.Engine.DNN_OPENVINO, accelerator=edgeiq.Accelerator.MYRIAD)
+    pose_estimator.load(engine=edgeiq.Engine.DNN)
 
     y_letter = cv2.imread('y_letter.png')
     m_letter = cv2.imread('m_letter.jpg')
@@ -118,7 +83,7 @@ def main():
     a_letter = cv2.imread('a_letter.jpg')
 
     try:
-        with edgeiq.WebcamVideoStream(cam=1) as video_stream, \
+        with edgeiq.WebcamVideoStream(cam=0) as video_stream, \
                 edgeiq.Streamer() as streamer:
             # Allow Webcam to warm up
             time.sleep(2.0)
@@ -129,22 +94,26 @@ def main():
                 results = pose_estimator.estimate(frame)
                 # Generate text to display on streamer
                 text = [""]
+                text.append(
+                        "Inference time: {:1.3f} s".format(results.duration))
                 for ind, pose in enumerate(results.poses):
-                    app_pose = YMCAPose(pose)
-
-                    if is_a(app_pose):
+                    if not all([pose.key_points['Right Wrist'].y, pose.key_points['Left Wrist'].y,
+                                pose.key_points['Right Elbow'].y, pose.key_points['Left Elbow'].y,
+                                pose.key_points['Nose'].x, pose.key_points['Neck'].y]):
+                        continue
+                    if is_a(pose):
                         overlay = edgeiq.resize(a_letter, frame.shape[1], frame.shape[0], False)
                         cv2.addWeighted(frame, 0.4, overlay, 0.6, 0, frame)
                         continue
-                    if is_m(app_pose):
+                    if is_m(pose):
                         overlay = edgeiq.resize(m_letter, frame.shape[1], frame.shape[0], False)
                         cv2.addWeighted(frame, 0.4, overlay, 0.6, 0, frame)
                         continue
-                    if is_y(app_pose):
+                    if is_y(pose):
                         overlay = edgeiq.resize(y_letter, frame.shape[1], frame.shape[0], False)
                         cv2.addWeighted(frame, 0.4, overlay, 0.6, 0, frame)
                         continue
-                    if is_c(app_pose):
+                    if is_c(pose):
                         overlay = edgeiq.resize(c_letter, frame.shape[1], frame.shape[0], False)
                         cv2.addWeighted(frame, 0.4, overlay, 0.6, 0, frame)
                         continue
@@ -159,5 +128,5 @@ def main():
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.WARNING)
     main()

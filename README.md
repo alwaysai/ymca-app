@@ -1,5 +1,4 @@
 # YMCA APP
-*** This app expects edgeiq 0.14.0 (available by dockerfile or in the 0.3.0 installers)
 In this example we'll be using a simple set of cases to determine if someone is doing a Y, M, C, or A in our image
 then displaying the letter on the screen if they do creating a fun virtual experience.
 
@@ -9,9 +8,9 @@ then displaying the letter on the screen if they do creating a fun virtual exper
 - [Docker installed](https://dashboard.alwaysai.co/docs/getting_started/edge_device_setup.html on the target deployment device (if different than the development machin)
 
 ## Running
-First configure where the app will be deployed (locally or to a remote device) with: `aai app configure`
+First configure where the app will be installed (locally or on a remote device) with: `aai app configure`
 
-Then deploy the code with `aai app deploy`
+Then install the code with `aai app install`
 
 And finally to start: `aai app start`
 
@@ -19,6 +18,5 @@ Open `localhost:5000` on any browswer to view the output streamer.
 
 To end the app just click on the red stop button in the streamer or CTRL+C from the command line.
 
-## About AlwaysAI
-AlwaysAI is a platform aimed at democratizing AI on the edge by making it easier. We provide clis, apis, a model 
-catalog and docker containers to help you get started building a CV app in minutes. Visit our website at [alwaysi.co](https://www.alwaysai.co) for more info.
+## About alwaysAI
+alwaysAI is a platform aimed at democratizing AI on the edge by making it easier. We provide clis, apis, a model catalog and docker containers to help you get started building a CV app in minutes. Visit our website at [alwaysi.co](https://www.alwaysai.co) for more info.

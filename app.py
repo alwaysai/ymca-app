@@ -10,7 +10,7 @@ def arms_overhead(pose):
 
 
 def arms_outward(pose):
-    return all([x < pose.key_points['Nose'].x for x in (pose.key_points['Right Elbow'].x, pose.key_points['Right Wrist'].x)] +\
+    return all([x < pose.key_points['Nose'].x for x in (pose.key_points['Right Elbow'].x, pose.key_points['Right Wrist'].x)] +
                [x > pose.key_points['Nose'].x for x in (pose.key_points['Left Elbow'].x, pose.key_points['Left Wrist'].x)])
 
 
@@ -119,7 +119,6 @@ def main():
                         continue
 
                 streamer.send_data(results.draw_poses(frame), text)
-
 
                 if streamer.check_exit():
                     break

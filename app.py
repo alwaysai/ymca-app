@@ -74,7 +74,7 @@ def is_c(pose):
 
 
 def main():
-    pose_estimator = edgeiq.PoseEstimation("alwaysai/human-pose")
+    pose_estimator = edgeiq.PoseEstimation("alwaysai/human_pose")
     pose_estimator.load(engine=edgeiq.Engine.DNN)
 
     y_letter = cv2.imread('y_letter.png')
